@@ -5,7 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
+static char *font = "ComicCodeLigatures Nerd Font Mono:pixelsize=14:antialias=true:autohint=true";
 #if FONT2_PATCH
 /* Spare fonts */
 static char *font2[] = {
@@ -145,7 +145,7 @@ char *termname = "st-256color";
  *
  *	stty tabs
  */
-unsigned int tabspaces = 8;
+unsigned int tabspaces = 4;
 
 #if ALPHA_PATCH
 /* bg opacity */
@@ -161,33 +161,69 @@ float alphaUnfocused = 0.6;
 
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
-	/* 8 normal colors */
-	"black",
-	"red3",
-	"green3",
-	"yellow3",
-	"blue2",
-	"magenta3",
-	"cyan3",
-	"gray90",
 
-	/* 8 bright colors */
-	"gray50",
-	"red",
-	"green",
-	"yellow",
-	"#5c5cff",
-	"magenta",
-	"cyan",
-	"white",
+  	/* 8 normal colors */
+	
+  	[0] = "#32302f", /* hard contrast: #1d2021 / soft contrast: #32302f */
+  	[1] = "#EA6962", /* red     */
+  	[2] = "#A9B665", /* green   */
+  	[3] = "#D8A657", /* yellow  */
+  	[4] = "#7DAEA3", /* blue    */
+  	[5] = "#D3869B", /* magenta */
+  	[6] = "#89B482", /* cyan    */
+  	[7] = "#D4BE98", /* white   */
+	
+  	/* [0] = "#282828", /1* hard contrast: #1d2021 / soft contrast: #32302f *1/ */
+  	/* [1] = "#cc241d", /1* red     *1/ */
+  	/* [2] = "#98971a", /1* green   *1/ */
+  	/* [3] = "#d79921", /1* yellow  *1/ */
+  	/* [4] = "#458588", /1* blue    *1/ */
+  	/* [5] = "#b16286", /1* magenta *1/ */
+  	/* [6] = "#689d6a", /1* cyan    *1/ */
+  	/* [7] = "#a89984", /1* white   *1/ */
+	
+  	/* 8 bright colors */
+	
+  	[8]  = "#928374", /* black   */
+  	[9]  = "#EA6962", /* red     */
+  	[10] = "#A9B665", /* green   */
+  	[11] = "#D8A657", /* yellow  */
+  	[12] = "#7DAEA3", /* blue    */
+  	[13] = "#D3869B", /* magenta */
+  	[14] = "#89B482", /* cyan    */
+  	[15] = "#D4BE98", /* white   */
+	
+  	[255] = 0,
+  	"#282828",
+  	"#ebdbb2",
 
-	[255] = 0,
+	// /* 8 normal colors */
+	// "black",
+	// "red3",
+	// "green3",
+	// "yellow3",
+	// "blue2",
+	// "magenta3",
+	// "cyan3",
+	// "gray90",
 
-	/* more colors can be added after 255 to use with DefaultXX */
-	"#add8e6", /* 256 -> cursor */
-	"#555555", /* 257 -> rev cursor*/
-	"#000000", /* 258 -> bg */
-	"#e5e5e5", /* 259 -> fg */
+	// /* 8 bright colors */
+	// "gray50",
+	// "red",
+	// "green",
+	// "yellow",
+	// "#5c5cff",
+	// "magenta",
+	// "cyan",
+	// "white",
+
+	// [255] = 0,
+
+	// /* more colors can be added after 255 to use with DefaultXX */
+	// "#add8e6", /* 256 -> cursor */
+	// "#555555", /* 257 -> rev cursor*/
+	// "#000000", /* 258 -> bg */
+	// "#e5e5e5", /* 259 -> fg */
 };
 
 
@@ -199,10 +235,10 @@ static const char *colorname[] = {
 unsigned int defaultbg = 0;
 unsigned int bg = 17, bgUnfocused = 16;
 #else
-unsigned int defaultbg = 258;
+unsigned int defaultbg = 256;
 #endif // ALPHA_FOCUS_HIGHLIGHT_PATCH
-unsigned int defaultfg = 259;
-unsigned int defaultcs = 256;
+unsigned int defaultfg = 257;
+unsigned int defaultcs = 15;
 unsigned int defaultrcs = 257;
 
 #if VIM_BROWSE_PATCH
@@ -237,7 +273,7 @@ Glyph style[] = {{' ',ATTR_ITALIC|ATTR_FAINT,15,16}, {' ',ATTR_ITALIC,232,11},
  * 7: Blinking st cursor
  * 8: Steady st cursor
  */
-static unsigned int cursorstyle = 1;
+static unsigned int cursorstyle = 2;
 static Rune stcursor = 0x2603; /* snowman (U+2603) */
 #else
 /*
