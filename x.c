@@ -345,29 +345,15 @@ int
 mouseaction(XEvent *e, uint release)
 {
 	MouseShortcut *ms;
+	int screen = tisaltscr() ? S_ALT : S_PRI;
 
 	/* ignore Button<N>mask for Button<N> - it's set on release */
 	uint state = e->xbutton.state & ~buttonmask(e->xbutton.button);
 
-	#if SCROLLBACK_MOUSE_ALTSCREEN_PATCH
-	if (tisaltscr())
-		for (ms = maltshortcuts; ms < maltshortcuts + LEN(maltshortcuts); ms++) {
-			if (ms->release == release &&
-					ms->button == e->xbutton.button &&
-					(match(ms->mod, state) ||  /* exact or forced */
-					 match(ms->mod, state & ~forcemousemod))) {
-				ms->func(&(ms->arg));
-				return 1;
-			}
-		}
-	else
-	#endif // SCROLLBACK_MOUSE_ALTSCREEN_PATCH
 	for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
 		if (ms->release == release &&
 				ms->button == e->xbutton.button &&
-				#if UNIVERSCROLL_PATCH
-				(!ms->altscrn || (ms->altscrn == (tisaltscr() ? 1 : -1))) &&
-				#endif // UNIVERSCROLL_PATCH
+				(!ms->screen || (ms->screen == screen)) &&
 				(match(ms->mod, state) ||  /* exact or forced */
 				 match(ms->mod, state & ~forcemousemod))) {
 			ms->func(&(ms->arg));
@@ -1216,7 +1202,11 @@ xloadfont(Font *f, FcPattern *pattern)
 	FcConfigSubstitute(NULL, configured, FcMatchPattern);
 	XftDefaultSubstitute(xw.dpy, xw.scr, configured);
 
+	#if USE_XFTFONTMATCH_PATCH
+	match = XftFontMatch(xw.dpy, xw.scr, pattern, &result);
+	#else
 	match = FcFontMatch(NULL, configured, &result);
+	#endif // USE_XFTFONTMATCH_PATCH
 	if (!match) {
 		FcPatternDestroy(configured);
 		return 1;
@@ -1580,6 +1570,13 @@ xinit(int cols, int rows)
 			PropModeReplace, (uchar *)&icon, LEN(icon));
 	#endif //NETWMICON_PATCH
 
+	#if NO_WINDOW_DECORATIONS_PATCH
+	Atom motifwmhints = XInternAtom(xw.dpy, "_MOTIF_WM_HINTS", False);
+	unsigned int data[] = { 0x2, 0x0, 0x0, 0x0, 0x0 };
+	XChangeProperty(xw.dpy, xw.win, motifwmhints, motifwmhints, 16,
+				PropModeReplace, (unsigned char *)data, 5);
+	#endif // NO_WINDOW_DECORATIONS_PATCH
+
 	xw.netwmpid = XInternAtom(xw.dpy, "_NET_WM_PID", False);
 	XChangeProperty(xw.dpy, xw.win, xw.netwmpid, XA_CARDINAL, 32,
 			PropModeReplace, (uchar *)&thispid, 1);
@@ -1728,12 +1725,12 @@ xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x
 					fccharset);
 			FcPatternAddBool(fcpattern, FC_SCALABLE, 1);
 
-			FcConfigSubstitute(0, fcpattern,
-					FcMatchPattern);
+			#if !USE_XFTFONTMATCH_PATCH
+			FcConfigSubstitute(0, fcpattern, FcMatchPattern);
 			FcDefaultSubstitute(fcpattern);
+			#endif // USE_XFTFONTMATCH_PATCH
 
-			fontpattern = FcFontSetMatch(0, fcsets, 1,
-					fcpattern, &fcres);
+			fontpattern = FcFontSetMatch(0, fcsets, 1, fcpattern, &fcres);
 
 			/* Allocate memory for the new cache entry. */
 			if (frclen >= frccap) {
@@ -3033,7 +3030,7 @@ focus(XEvent *ev)
 		if (!focused) {
 			focused = 1;
 			xloadcols();
-			redraw();
+			tfulldirt();
 		}
 		#endif // ALPHA_FOCUS_HIGHLIGHT_PATCH
 	} else {
@@ -3046,7 +3043,7 @@ focus(XEvent *ev)
 		if (focused) {
 			focused = 0;
 			xloadcols();
-			redraw();
+			tfulldirt();
 		}
 		#endif // ALPHA_FOCUS_HIGHLIGHT_PATCH
 	}
@@ -3101,7 +3098,7 @@ kpress(XEvent *ev)
 	XKeyEvent *e = &ev->xkey;
 	KeySym ksym;
 	char buf[64], *customkey;
-	int len;
+	int len, screen;
 	Rune c;
 	Status status;
 	Shortcut *bp;
@@ -3154,9 +3151,12 @@ kpress(XEvent *ev)
 	}
 	#endif // VIM_BROWSE_PATCH
 
+	screen = tisaltscr() ? S_ALT : S_PRI;
+
 	/* 1. shortcuts */
 	for (bp = shortcuts; bp < shortcuts + LEN(shortcuts); bp++) {
-		if (ksym == bp->keysym && match(bp->mod, e->state)) {
+		if (ksym == bp->keysym && match(bp->mod, e->state) &&
+				(!bp->screen || bp->screen == screen)) {
 			bp->func(&(bp->arg));
 			return;
 		}
